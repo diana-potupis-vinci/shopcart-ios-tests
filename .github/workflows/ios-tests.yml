@@ -1,0 +1,67 @@
+name: iOS tests
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen and generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          INFO=$(xcrun simctl list devices available -j | python3 ci/pick_sim.py)
+          echo "udid=${INFO%%|*}" >> "$GITHUB_OUTPUT"
+          echo "name=${INFO##*|}" >> "$GITHUB_OUTPUT"
+          xcodebuild -version
+
+      - name: Unit tests
+        id: unit
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p results
+          xcodebuild test -project ShopCart.xcodeproj -scheme ShopCart \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:ShopCartTests -enableCodeCoverage YES \
+            -resultBundlePath results/unit.xcresult | tee results/unit.log
+
+      - name: UI tests
+        id: ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild test -project ShopCart.xcodeproj -scheme ShopCart \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:ShopCartUITests \
+            -resultBundlePath results/ui.xcresult | tee results/ui.log
+
+      - name: Summary
+        if: always()
+        env:
+          SIM_NAME: ${{ steps.sim.outputs.name }}
+        run: python3 ci/summarize.py
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results
+
+      - name: Fail if any tests failed
+        if: steps.unit.outcome == 'failure' || steps.ui.outcome == 'failure'
+        run: exit 1
