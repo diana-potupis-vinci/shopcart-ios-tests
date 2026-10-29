@@ -1,0 +1,16 @@
+default_platform(:ios)
+
+# Необов'язково: локальний запуск на Mac (у CI використовується xcodebuild напряму)
+platform :ios do
+  lane :unit do
+    scan(project: "ShopCart.xcodeproj", scheme: "ShopCart", only_testing: ["ShopCartTests"],
+         device: "iPhone 17", code_coverage: true, result_bundle: true,
+         output_directory: "./results/fastlane-unit")
+  end
+
+  lane :ui do
+    scan(project: "ShopCart.xcodeproj", scheme: "ShopCart", only_testing: ["ShopCartUITests"],
+         device: "iPhone 17", result_bundle: true,
+         output_directory: "./results/fastlane-ui")
+  end
+end
