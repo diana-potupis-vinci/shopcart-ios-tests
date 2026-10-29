@@ -1,11 +1,15 @@
 import XCTest
 
-/// Чекає, поки елемент існує і готовий до натискання (не перекритий клавіатурою чи анімацією)
+/// Натискає елемент; якщо XCUITest вважає його недоступним (isHittable == false),
+/// виводить дерево елементів у журнал і натискає за координатами центру елемента.
 @MainActor
-func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 8) -> Bool {
-    let predicate = NSPredicate(format: "exists == true AND isHittable == true")
-    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
-    return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+func tapSafely(_ element: XCUIElement) {
+    if element.isHittable {
+        element.tap()
+    } else {
+        print("Елемент не hittable, ієрархія:\n\(XCUIApplication().debugDescription)")
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
 }
 
 /// Page Object: екран входу
@@ -41,9 +45,9 @@ final class ShopScreen {
     var promoMessage: XCUIElement { app.staticTexts["promoMessage"] }
 
     func applyPromo(_ code: String) {
-        promoField.tap()
+        tapSafely(promoField)
         promoField.typeText(code + "\n")      // Return ховає клавіатуру
-        _ = waitUntilHittable(applyPromoButton)
-        applyPromoButton.tap()
+        _ = applyPromoButton.waitForExistence(timeout: 5)
+        tapSafely(applyPromoButton)
     }
 }

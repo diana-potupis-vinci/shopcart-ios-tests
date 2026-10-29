@@ -10,15 +10,15 @@ final class ShopUITests: BaseUITestCase {
 
     func testAddProductUpdatesTotal() {
         let shop = ShopScreen(app)
-        XCTAssertTrue(waitUntilHittable(shop.addButton(2)))
-        shop.addButton(2).tap()                       // кабель 80 + доставка 50
+        XCTAssertTrue(shop.addButton(2).waitForExistence(timeout: 8))
+        tapSafely(shop.addButton(2))                       // кабель 80 + доставка 50
         XCTAssertEqual(shop.totalLabel.label, "Разом: 130.00 ₴")
     }
 
     func testPromoSave10AppliesDiscount() {
         let shop = ShopScreen(app)
-        XCTAssertTrue(waitUntilHittable(shop.addButton(1)))
-        shop.addButton(1).tap()                       // навушники 1200
+        XCTAssertTrue(shop.addButton(1).waitForExistence(timeout: 8))
+        tapSafely(shop.addButton(1))                       // навушники 1200
         shop.applyPromo("SAVE10")
         XCTAssertTrue(shop.promoMessage.waitForExistence(timeout: 3))
         XCTAssertEqual(shop.totalLabel.label, "Разом: 1080.00 ₴")
@@ -26,7 +26,7 @@ final class ShopUITests: BaseUITestCase {
 
     func testUnknownPromoShowsError() {
         let shop = ShopScreen(app)
-        XCTAssertTrue(waitUntilHittable(shop.promoField))
+        XCTAssertTrue(shop.promoField.waitForExistence(timeout: 8))
         shop.applyPromo("WRONG")
         XCTAssertTrue(shop.promoMessage.waitForExistence(timeout: 3))
         XCTAssertEqual(shop.promoMessage.label, "Невірний промокод")

@@ -59,18 +59,20 @@ struct ShopView: View {
     }
 
     var body: some View {
-        List {
-            Section("Товари") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Товари").font(.headline)
                 ForEach(ShopView.catalog) { product in
                     HStack {
                         Text("\(product.name) – \(money(product.price))")
                         Spacer()
                         Button("Додати") { viewModel.add(product) }
+                            .buttonStyle(.bordered)
                             .accessibilityIdentifier("add_\(product.id)")
                     }
                 }
-            }
-            Section("Кошик") {
+                Divider()
+                Text("Кошик").font(.headline)
                 Text("Сума: \(money(viewModel.cart.subtotal))")
                     .accessibilityIdentifier("subtotalLabel")
                 Text("Знижка: \(money(viewModel.cart.discount))")
@@ -80,9 +82,10 @@ struct ShopView: View {
                 Text("Разом: \(money(viewModel.cart.total))")
                     .font(.headline)
                     .accessibilityIdentifier("totalLabel")
-            }
-            Section("Промокод") {
+                Divider()
+                Text("Промокод").font(.headline)
                 TextField("Промокод", text: $promoCode)
+                    .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.characters)
                     .focused($promoFocused)
                     .submitLabel(.done)
@@ -92,12 +95,14 @@ struct ShopView: View {
                     promoFocused = false
                     Task { await viewModel.applyPromo(promoCode) }
                 }
+                .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("applyPromoButton")
                 if !viewModel.promoMessage.isEmpty {
                     Text(viewModel.promoMessage)
                         .accessibilityIdentifier("promoMessage")
                 }
             }
+            .padding()
         }
         .scrollDismissesKeyboard(.immediately)
     }
