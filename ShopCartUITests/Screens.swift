@@ -9,6 +9,7 @@ func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 8) -> Boo
 }
 
 /// Page Object: екран входу
+@MainActor
 final class LoginScreen {
     private let app: XCUIApplication
     init(_ app: XCUIApplication) { self.app = app }
@@ -28,6 +29,7 @@ final class LoginScreen {
 }
 
 /// Page Object: екран магазину та кошика
+@MainActor
 final class ShopScreen {
     private let app: XCUIApplication
     init(_ app: XCUIApplication) { self.app = app }
