@@ -17,6 +17,23 @@ def cases(node, out):
         for v in node:
             cases(v, out)
 
+def failures(node, out):
+    if isinstance(node, dict):
+        if node.get("nodeType") == "Failure Message":
+            out.append(str(node.get("name", "")))
+        for v in node.values():
+            failures(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            failures(v, out)
+
+def export_attachments(path, out):
+    try:
+        subprocess.run(["xcrun", "xcresulttool", "export", "attachments", "--path", path,
+                        "--output-path", out], capture_output=True, text=True, timeout=300)
+    except Exception:
+        pass
+
 def section(title, path, with_coverage):
     md = [f"## {title}", ""]
     if not os.path.exists(path):
@@ -40,6 +57,14 @@ def section(title, path, with_coverage):
         for c in found:
             md.append(f"| {c.get('name')} | {c.get('result')} | {c.get('duration', '')} |")
         md.append("")
+        bad = [c for c in found if c.get("result") == "Failed"]
+        if bad:
+            md += ["### Повідомлення про збої", ""]
+            for c in bad:
+                msgs = []
+                failures(c, msgs)
+                md.append(f"- **{c.get('name')}**: " + " | ".join(msgs))
+            md.append("")
     except Exception as e:
         md += [f"Не вдалося прочитати список тестів: {e}", ""]
     if with_coverage:
@@ -56,6 +81,7 @@ def section(title, path, with_coverage):
             md += [f"Не вдалося прочитати покриття: {e}", ""]
     return md
 
+export_attachments("results/ui.xcresult", "results/ui-attachments")
 sim = os.environ.get("SIM_NAME", "?")
 lines = ["# Результати тестування ShopCart", "", f"Симулятор: **{sim}**", ""]
 lines += section("Модульні тести (ShopCartTests)", "results/unit.xcresult", True)

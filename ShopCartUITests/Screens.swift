@@ -1,5 +1,13 @@
 import XCTest
 
+/// Чекає, поки елемент існує і готовий до натискання (не перекритий клавіатурою чи анімацією)
+@MainActor
+func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 8) -> Bool {
+    let predicate = NSPredicate(format: "exists == true AND isHittable == true")
+    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+    return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+}
+
 /// Page Object: екран входу
 final class LoginScreen {
     private let app: XCUIApplication
@@ -32,7 +40,8 @@ final class ShopScreen {
 
     func applyPromo(_ code: String) {
         promoField.tap()
-        promoField.typeText(code)
+        promoField.typeText(code + "\n")      // Return ховає клавіатуру
+        _ = waitUntilHittable(applyPromoButton)
         applyPromoButton.tap()
     }
 }

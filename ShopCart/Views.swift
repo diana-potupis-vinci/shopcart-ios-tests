@@ -42,6 +42,7 @@ struct LoginView: View {
 struct ShopView: View {
     @StateObject private var viewModel: CartViewModel
     @State private var promoCode = ""
+    @FocusState private var promoFocused: Bool
 
     static let catalog = [
         Product(id: 1, name: "Навушники", price: 1200),
@@ -83,8 +84,12 @@ struct ShopView: View {
             Section("Промокод") {
                 TextField("Промокод", text: $promoCode)
                     .textInputAutocapitalization(.characters)
+                    .focused($promoFocused)
+                    .submitLabel(.done)
+                    .onSubmit { promoFocused = false }
                     .accessibilityIdentifier("promoField")
                 Button("Застосувати") {
+                    promoFocused = false
                     Task { await viewModel.applyPromo(promoCode) }
                 }
                 .accessibilityIdentifier("applyPromoButton")
@@ -94,5 +99,6 @@ struct ShopView: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.immediately)
     }
 }
